@@ -1,0 +1,9 @@
+
+
+<launch>
+
+    <!-- My Package launch file -->
+    <node pkg="roboticarts_pad" type="roboticarts_pad" name="roboticarts_pad_node" output="screen">
+    </node>
+
+</launch>
