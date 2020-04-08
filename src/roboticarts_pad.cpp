@@ -1,86 +1,303 @@
-#include "ros/ros.h"
-#include "std_msgs/String.h"
 
-#include <sstream>
+#include <roboticarts_pad/roboticarts_pad.h>
 
-/**
- * This tutorial demonstrates simple sending of messages over the ROS system.
- */
-int main(int argc, char **argv)
+
+RoboticartsPad::RoboticartsPad(ros::NodeHandle nodehandle):_nh(nodehandle)
 {
-  /**
-   * The ros::init() function needs to see argc and argv so that it can perform
-   * any ROS arguments and name remapping that were provided at the command line.
-   * For programmatic remappings you can use a different version of init() which takes
-   * remappings directly, but for most command-line programs, passing argc and argv is
-   * the easiest way to do it.  The third argument to init() is the name of the node.
-   *
-   * You must call one of the versions of ros::init() before using any other
-   * part of the ROS system.
-   */
-  ros::init(argc, argv, "talker");
 
-  /**
-   * NodeHandle is the main access point to communications with the ROS system.
-   * The first NodeHandle constructed will fully initialize this node, and the last
-   * NodeHandle destructed will close down the node.
-   */
-  ros::NodeHandle n;
 
-  /**
-   * The advertise() function is how you tell ROS that you want to
-   * publish on a given topic name. This invokes a call to the ROS
-   * master node, which keeps a registry of who is publishing and who
-   * is subscribing. After this advertise() call is made, the master
-   * node will notify anyone who is trying to subscribe to this topic name,
-   * and they will in turn negotiate a peer-to-peer connection with this
-   * node.  advertise() returns a Publisher object which allows you to
-   * publish messages on that topic through a call to publish().  Once
-   * all copies of the returned Publisher object are destroyed, the topic
-   * will be automatically unadvertised.
-   *
-   * The second parameter to advertise() is the size of the message queue
-   * used for publishing messages.  If messages are published more quickly
-   * than we can send them, the number here specifies how many messages to
-   * buffer up before throwing some away.
-   */
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
+    nodeName = ros::this_node::getName();
+    _nh.getParam(nodeName + "/cmd_vel_topic", cmd_vel_topic);
 
-  ros::Rate loop_rate(10);
+    joy_sub = _nh.subscribe("joy", 1, &RoboticartsPad::joyCallback, this);
+    vel_pub = _nh.advertise<geometry_msgs::Twist>(cmd_vel_topic, 1000);
 
-  /**
-   * A count of how many messages we have sent. This is used to create
-   * a unique string for each message.
-   */
-  int count = 0;
-  while (ros::ok())
-  {
-    /**
-     * This is a message object. You stuff it with data, and then publish it.
-     */
-    std_msgs::String msg;
+}
 
-    std::stringstream ss;
-    ss << "hello world " << count;
-    msg.data = ss.str();
 
-    ROS_INFO("%s", msg.data.c_str());
+void RoboticartsPad::updateJoyValues(const sensor_msgs::Joy::ConstPtr& msg){
 
-    /**
-     * The publish() function is how you send messages. The parameter
-     * is the message object. The type of this object must agree with the type
-     * given as a template parameter to the advertise<>() call, as was done
-     * in the constructor above.
-     */
-    chatter_pub.publish(msg);
+    /* Axis */
+    horizontal_axis_stick_left = msg -> axes[0]; 
+    vertical_axis_stick_left = msg -> axes[1]; 
+    horizontal_axis_stick_right = msg -> axes[2]; 
+    L2_analogic = msg -> axes[3];
+    R2_analogic = msg -> axes[4];
+    vertical_axis_stick_right = msg -> axes[5]; 
+    horizontal_cross_key = msg -> axes[9];
+    vertical_cross_key = msg -> axes[10];
 
-    ros::spinOnce();
+    /* Buttons */
+    square_button = msg -> buttons[0];
+    x_button = msg -> buttons[1];
+    circle_button = msg -> buttons[2];
+    triangle_button = msg -> buttons[3];
+    L1_button  = msg -> buttons[4];
+    R1_button  = msg -> buttons[5];
+    L2_button = msg -> buttons[6];
+    R2_button = msg -> buttons[7];
+    share_button = msg -> buttons[8];
+    options_button = msg -> buttons[9];
+    L3_button = msg -> buttons[10];
+    R3_button = msg -> buttons[11];
+    ps4_button = msg -> buttons[12];
+    touchpad_button = msg -> buttons[13];
 
-    loop_rate.sleep();
-    ++count;
+}
+
+void RoboticartsPad::printJoyValues(){
+
+  ROS_INFO("horizontal_axis_stick_left: %f", horizontal_axis_stick_left);
+  ROS_INFO("vertical_axis_stick_left: %f", vertical_axis_stick_left);
+
+  ROS_INFO("horizontal_axis_stick_right: %f", horizontal_axis_stick_right);
+  ROS_INFO("vertical_axis_stick_right: %f", vertical_axis_stick_right);
+
+  ROS_INFO("L2_analogic: %f", L2_analogic);
+  ROS_INFO("R2_analogic: %f", R2_analogic);
+
+  ROS_INFO("horizontal_cross_key: %f", horizontal_cross_key);
+  ROS_INFO("vertical_cross_key: %f", vertical_cross_key);
+
+  ROS_INFO("-------");
+
+  ROS_INFO("square_button: %d", square_button);
+  ROS_INFO("x_button: %d", x_button);
+  ROS_INFO("circle_button: %d", circle_button);
+  ROS_INFO("triangle_button: %d", triangle_button);
+  ROS_INFO("L1_button: %d", L1_button);
+  ROS_INFO("R1_button: %d", R1_button);
+  ROS_INFO("L2_button: %d", L2_button);
+  ROS_INFO("R2_button: %d", R2_button);
+  ROS_INFO("share_button: %d", share_button);
+  ROS_INFO("options_button: %d", options_button);
+  ROS_INFO("L3_button: %d", L3_button);
+  ROS_INFO("R3_button: %d", R3_button);
+  ROS_INFO("ps4_button: %d", ps4_button);
+  ROS_INFO("touchpad_button: %d", touchpad_button);
+
+  ROS_INFO("-------------------------------------");
+
+
+}
+
+
+float RoboticartsPad::setLimits(float value, float min, float max){
+
+    if (value >= max)
+        value = max;
+
+    if (value <= min)
+        value = min;
+
+  return value;
+}
+
+bool RoboticartsPad::isPressed(bool button){
+
+    bool state;
+
+    if(button)
+      state = true;
+    else
+      state = false;
+    
+    return state;
+}
+
+bool RoboticartsPad::isReleased(bool button){
+    
+    return !isPressed(button);
+}
+
+
+float RoboticartsPad::setTurn(uint8_t increment_button, uint8_t decrement_button){
+
+  float turn_value;
+
+  // Execute once when button is pressed
+  if(!isExecuted[TURN_UP]) {
+
+      if (isPressed(increment_button)){
+
+          _turn = _turn + TURN_INCREMENT;
+          isExecuted[TURN_UP] = true;
+      }
+
+  }
+
+  if(!isExecuted[TURN_DOWN]) {
+
+      if (isPressed(decrement_button)){
+
+          _turn = _turn - TURN_INCREMENT;
+          isExecuted[TURN_DOWN] = true;
+      }
+
+  }
+
+  // Wait for button released to execute again
+  if(isReleased(increment_button)){
+
+      isExecuted[TURN_UP] = false;
+  }
+
+  if(isReleased(decrement_button)){
+
+      isExecuted[TURN_DOWN] = false;
   }
 
 
-  return 0;
+  turn_value = setLimits(_turn, 0, MAX_TURN);
+
+  return turn_value;
 }
 
+
+float RoboticartsPad::setSpeed(uint8_t increment_button, uint8_t decrement_button){
+
+  float speed_value;
+
+  // Execute once when button is pressed
+  if(!isExecuted[SPEED_UP]) {
+
+      if (isPressed(increment_button)){
+
+          _speed = _speed + SPEED_INCREMENT;
+          isExecuted[SPEED_UP] = true;
+      }
+
+  }
+
+  if(!isExecuted[SPEED_DOWN]) {
+
+      if (isPressed(decrement_button)){
+
+          _speed = _speed - SPEED_INCREMENT;
+          isExecuted[SPEED_DOWN] = true;
+      }
+
+  }
+
+  // Wait for button released to execute again
+  if(isReleased(increment_button)){
+
+      isExecuted[SPEED_UP] = false;
+  }
+
+  if(isReleased(decrement_button)){
+
+      isExecuted[SPEED_DOWN] = false;
+  }
+
+
+  speed_value = setLimits(_speed, 0, MAX_SPEED);
+
+  return speed_value;
+}
+
+
+
+int8_t RoboticartsPad::setSpeedDirection(uint8_t forward_stick, uint8_t backward_stick){
+
+    int8_t speed_direction_value;
+
+    // Forward
+    if(forward_stick > 0.5)
+        speed_direction_value = 1;
+    
+    // Backward
+    else if (backward_stick < -0.5)
+        speed_direction_value = -1;
+    
+    //Stop
+    else
+        speed_direction_value = 0;
+
+    
+    return speed_direction_value;
+}
+
+
+int8_t RoboticartsPad::setTurnDirection(uint8_t clockwise_button, uint8_t counterclockwise_button ){
+
+    int8_t turn_direction_value;
+
+    // Turn right
+    if(clockwise_button && !counterclockwise_button)
+        turn_direction_value = 1;
+
+    // Turn left
+    else if(!clockwise_button && counterclockwise_button)
+      turn_direction_value = -1;
+
+    // Stop
+    else
+      turn_direction_value = 0;
+
+
+    return turn_direction_value;
+
+}
+
+
+
+geometry_msgs::Twist RoboticartsPad::setVelocity (){
+
+  geometry_msgs::Twist vel;
+
+  float speed, turn;
+  int8_t speedDirection, turnDirection;
+
+  // Dead man button
+  if(R1_button){
+
+
+      speed = setSpeed(triangle_button, x_button); // Increment, decrement
+      turn= setTurn(square_button, circle_button); // Increment, decrement
+
+      speedDirection = setSpeedDirection(vertical_axis_stick_left, vertical_axis_stick_left); // Forward, backward
+      turnDirection = setTurnDirection(R2_button, L2_button); // Clockwise, Counterclockwise 
+
+      vel.linear.x = speedDirection * speed;
+      vel.angular.z = turnDirection * turn;
+
+  }
+ 
+  else {
+
+    // Reset velocity
+    geometry_msgs::Twist reset_vel;
+    vel = reset_vel;
+
+  }
+
+
+  return vel;
+}
+
+
+void RoboticartsPad::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
+{
+  updateJoyValues(msg);
+  //printJoyValues();
+}
+
+
+void RoboticartsPad::run(){
+
+    geometry_msgs::Twist vel;
+    ros::Rate loop_rate(50);
+
+    while (ros::ok()){
+
+        vel = setVelocity();
+        vel_pub.publish(vel);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+
+  }
+
+
+}
