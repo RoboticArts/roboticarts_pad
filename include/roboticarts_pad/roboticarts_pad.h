@@ -5,6 +5,7 @@
 #include "std_msgs/String.h"
 #include "sensor_msgs/Joy.h"
 #include "geometry_msgs/Twist.h"
+#include <ctime>
 #include "math.h"
 
 #define SPEED_INCREMENT 0.1
@@ -13,7 +14,7 @@
 #define TURN_INIT 0.5
 #define MAX_SPEED 3.0
 #define MAX_TURN 3.0
-#define TIMEOUT_CONNECTION 2
+#define TIMEOUT_CONNECTION 5
 
 class RoboticartsPad{
 
@@ -51,13 +52,14 @@ class RoboticartsPad{
 
         bool firstConnection = true;
 
-        enum state_resources {CONNECTING, CONNECTED, DISCONNECTED};
+        enum state_resources {CONNECTING, CONNECTED, DISCONNECTED, NOT_FOUND};
         int state = CONNECTING;
 
         int last_print_state = CONNECTING;
 
         enum command {SPEED_UP, SPEED_DOWN, TURN_UP, TURN_DOWN};
 
+        double getCurrentTime();
         void updateJoyValues(const sensor_msgs::Joy::ConstPtr& msg);
         void printJoyValues(void);
         void setLimits(float &value, float min, float max);
@@ -65,8 +67,8 @@ class RoboticartsPad{
         bool isReleased(bool button);
         float setTurn(uint8_t increment_button, uint8_t decrement_button);
         float setSpeed(uint8_t increment_button, uint8_t decrement_button);
-        int8_t setSpeedDirection(uint8_t forward_stick, uint8_t backward_stick);
-        int8_t setTurnDirection(uint8_t clockwise_button, uint8_t counterclockwise_button );
+        int8_t setSpeedDirection(int8_t forward_stick, int8_t backward_stick);
+        int8_t setTurnDirection(int8_t clockwise_button, int8_t counterclockwise_button );
         geometry_msgs::Twist setVelocity ();
         void holdConnection();
         bool checkConnection();

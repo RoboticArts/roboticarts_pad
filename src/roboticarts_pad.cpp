@@ -12,12 +12,16 @@ RoboticartsPad::RoboticartsPad(ros::NodeHandle nodehandle):_nh(nodehandle)
     joy_sub = _nh.subscribe("joy", 1, &RoboticartsPad::joyCallback, this);
     vel_pub = _nh.advertise<geometry_msgs::Twist>(cmd_vel_topic, 1000);
 
-    init_connecting  = ros::Time::now().toSec();
-
+    init_connecting = getCurrentTime();
 
     ROS_INFO("%s node already!",nodeName.c_str());
 
 } 
+
+double RoboticartsPad::getCurrentTime(){
+
+    return double(time(0));
+}
 
 
 void RoboticartsPad::updateJoyValues(const sensor_msgs::Joy::ConstPtr& msg){
@@ -49,6 +53,7 @@ void RoboticartsPad::updateJoyValues(const sensor_msgs::Joy::ConstPtr& msg){
     touchpad_button = msg -> buttons[13];
 
 }
+
 
 void RoboticartsPad::printJoyValues(){
 
@@ -96,6 +101,7 @@ void RoboticartsPad::setLimits(float &value, float min, float max){
         value = min;
 
 }
+
 
 bool RoboticartsPad::isPressed(bool button){
 
@@ -196,30 +202,27 @@ float RoboticartsPad::setSpeed(uint8_t increment_button, uint8_t decrement_butto
 }
 
 
-
-
-int8_t RoboticartsPad::setSpeedDirection(uint8_t forward_stick, uint8_t backward_stick){
+int8_t RoboticartsPad::setSpeedDirection(int8_t forward_stick, int8_t backward_stick){
 
     int8_t speed_direction_value;
 
     // Forward
     if(forward_stick > 0.5)
         speed_direction_value = 1;
-    
+
     // Backward
     else if (backward_stick < -0.5)
         speed_direction_value = -1;
-    
+
     //Stop
     else
         speed_direction_value = 0;
 
-    
     return speed_direction_value;
 }
 
 
-int8_t RoboticartsPad::setTurnDirection(uint8_t clockwise_button, uint8_t counterclockwise_button ){
+int8_t RoboticartsPad::setTurnDirection(int8_t clockwise_button, int8_t counterclockwise_button ){
 
     int8_t turn_direction_value;
 
@@ -241,7 +244,6 @@ int8_t RoboticartsPad::setTurnDirection(uint8_t clockwise_button, uint8_t counte
 }
 
 
-
 geometry_msgs::Twist RoboticartsPad::setVelocity (){
 
   geometry_msgs::Twist vel;
@@ -257,7 +259,7 @@ geometry_msgs::Twist RoboticartsPad::setVelocity (){
       turn= setTurn(square_button, circle_button); // Increment, decrement
 
       speedDirection = setSpeedDirection(vertical_axis_stick_left, vertical_axis_stick_left); // Forward, backward
-      turnDirection = setTurnDirection(R2_button, L2_button); // Clockwise, Counterclockwise 
+      turnDirection = setTurnDirection(L2_button, R2_button); // Clockwise, Counterclockwise 
 
       vel.linear.x = speedDirection * speed;
       vel.angular.z = turnDirection * turn;
@@ -275,15 +277,17 @@ geometry_msgs::Twist RoboticartsPad::setVelocity (){
   return vel;
 }
 
+
 void RoboticartsPad::holdConnection(){
 
       if(firstConnection)
-        last_connection = ros::Time::now().toSec();
+        last_connection = getCurrentTime();
 
       firstConnection = false;
-      last_connection = ros::Time::now().toSec();
+      last_connection = getCurrentTime();
 
 }
+
 
 bool RoboticartsPad::checkConnection(){
 
@@ -291,7 +295,7 @@ bool RoboticartsPad::checkConnection(){
 
     if(!firstConnection){
 
-        if(ros::Time::now().toSec() - last_connection < TIMEOUT_CONNECTION) 
+        if(getCurrentTime() - last_connection < TIMEOUT_CONNECTION) 
             isConnected = true;
         else
             isConnected = false;
@@ -305,6 +309,7 @@ bool RoboticartsPad::checkConnection(){
 
 }
 
+
 void RoboticartsPad::printJoystickState(int print_state){
 
     if(print_state != last_print_state){
@@ -312,11 +317,15 @@ void RoboticartsPad::printJoystickState(int print_state){
         switch(print_state){
             
             case CONNECTED:
-                    ROS_INFO("Joystick connected [Last sync: %f]", ros::Time::now().toSec() - last_connection );
+                    ROS_INFO("Joystick connected [Last sync: %f]", getCurrentTime() - last_connection );
                     break;
 
             case DISCONNECTED:
-                    ROS_ERROR("Lost joystick connection [Last sync: %f]", ros::Time::now().toSec() - last_connection );
+                    ROS_ERROR("Lost joystick connection [Last sync: %f]", getCurrentTime() - last_connection );
+                    break;
+            
+            case NOT_FOUND: 
+                    ROS_WARN("Joystick not found. Make sure 'ds4drv --hidraw' is installed and running");
                     break;
         }
 
@@ -324,6 +333,7 @@ void RoboticartsPad::printJoystickState(int print_state){
 
     }
 }
+
 
 int RoboticartsPad::checkJoystickState(){
 
@@ -333,14 +343,16 @@ int RoboticartsPad::checkJoystickState(){
 
         case CONNECTING:
 
-            if(ros::Time::now().toSec() - init_connecting < TIMEOUT_CONNECTION){
+            if(getCurrentTime() - init_connecting < TIMEOUT_CONNECTION){
                 if(isConnected)
                     state = CONNECTED;
             }
 
             else{
-                if(!isConnected)
+                if(!isConnected){
+                    printJoystickState(NOT_FOUND);
                     state = DISCONNECTED;
+                }
             }
 
             break;
@@ -404,6 +416,5 @@ void RoboticartsPad::run(){
         loop_rate.sleep();
 
   }
-
 
 }
