@@ -51,8 +51,10 @@ class RoboticartsPad{
 
         bool firstConnection = true;
 
-        enum state_resources {BOOTING, CONNECTING, CONNECTED,CHECK_CONNECTION, DISCONNECTED, RECONNECTING};
-        int state = BOOTING;
+        enum state_resources {CONNECTING, CONNECTED, DISCONNECTED};
+        int state = CONNECTING;
+
+        int last_print_state = CONNECTING;
 
         enum command {SPEED_UP, SPEED_DOWN, TURN_UP, TURN_DOWN};
 
@@ -67,7 +69,8 @@ class RoboticartsPad{
         int8_t setTurnDirection(uint8_t clockwise_button, uint8_t counterclockwise_button );
         geometry_msgs::Twist setVelocity ();
         void holdConnection();
-        void printConnection(bool state);
+        int  checkJoystickState();
+        void printJoystickState(int state);
         bool checkConnection();
         void joyCallback(const sensor_msgs::Joy::ConstPtr& msg);
 

@@ -255,11 +255,9 @@ geometry_msgs::Twist RoboticartsPad::setVelocity (){
   float speed, turn;
   float isConnected;
   int8_t speedDirection, turnDirection;
-  
-  isConnected = checkConnection(); //Check joystick connection
 
   // Dead man button 
-  if(R1_button && isConnected){
+  if(R1_button){
 
       speed = setSpeed(triangle_button, x_button); // Increment, decrement
       turn= setTurn(square_button, circle_button); // Increment, decrement
@@ -293,66 +291,6 @@ void RoboticartsPad::holdConnection(){
 
 }
 
-
-void RoboticartsPad::printConnection(bool isConnected){
-
-    switch(state){
-
-        case BOOTING:
-
-            ROS_INFO("Node running!");
-            ROS_INFO("Waiting for joystick...");
-            state = CONNECTING;
-
-            break;
-
-        case CONNECTING:
-
-            if(ros::Time::now().toSec() - init_connecting < TIMEOUT_CONNECTION){
-
-                if(isConnected)
-                    state = CONNECTED;
-
-            }
-            else{
-
-                if(!isConnected)
-                    state = DISCONNECTED;
-            }
-
-            break;
-
-        case CONNECTED:
-
-            ROS_INFO("Joystick connected [Last sync: %f]", ros::Time::now().toSec() - last_connection );
-            state = CHECK_CONNECTION;
-
-            break;
-
-        case CHECK_CONNECTION:
-
-                if(!isConnected) 
-                    state = DISCONNECTED;
-
-            break;
-
-        case DISCONNECTED:
-
-                ROS_ERROR("Lost joystick connection [Last sync: %f]", ros::Time::now().toSec() - last_connection );
-                state = RECONNECTING;
-
-            break;
-
-        case RECONNECTING:
-
-                if(isConnected) 
-                    state = CONNECTED;
-            break;
-    }
-
-}
-
- 
 bool RoboticartsPad::checkConnection(){
 
     bool isConnected;  
@@ -369,13 +307,73 @@ bool RoboticartsPad::checkConnection(){
         isConnected = false;
     }
     
-
-    printConnection(isConnected); //Print once every time isConnected changes
-    
     return isConnected;
 
 }
 
+void RoboticartsPad::printJoystickState(int print_state){
+
+    if(print_state != last_print_state){
+
+        switch(print_state){
+            
+            case CONNECTED:
+                    ROS_INFO("Joystick connected [Last sync: %f]", ros::Time::now().toSec() - last_connection );
+                    break;
+
+            case DISCONNECTED:
+                    ROS_ERROR("Lost joystick connection [Last sync: %f]", ros::Time::now().toSec() - last_connection );
+                    break;
+        }
+
+        last_print_state = print_state;
+
+    }
+}
+
+int RoboticartsPad::checkJoystickState(){
+
+    bool isConnected = checkConnection();
+
+    switch(state){
+
+        case CONNECTING:
+
+            if(ros::Time::now().toSec() - init_connecting < TIMEOUT_CONNECTION){
+                if(isConnected)
+                    state = CONNECTED;
+            }
+
+            else{
+                if(!isConnected)
+                    state = DISCONNECTED;
+            }
+
+            break;
+
+        case CONNECTED:
+
+            printJoystickState(CONNECTED);
+
+            if(!isConnected) 
+                state = DISCONNECTED;
+
+            break;
+
+        case DISCONNECTED:
+
+            printJoystickState(DISCONNECTED);
+
+            if(isConnected) 
+                state = CONNECTED;
+
+            break;
+    }
+
+    return state;
+}
+
+ 
 void RoboticartsPad::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
   updateJoyValues(msg);
@@ -391,8 +389,22 @@ void RoboticartsPad::run(){
 
     while (ros::ok()){
 
-        vel = setVelocity();
-        vel_pub.publish(vel);
+        int status = checkJoystickState();
+
+        switch(status){
+        
+            case CONNECTED:
+                // Read from joystick, write to cmd_vel
+                vel = setVelocity();
+                vel_pub.publish(vel);
+                break;
+
+            case DISCONNECTED:
+                // Clear cmd_vel
+                geometry_msgs::Twist reset_vel;;
+                vel_pub.publish(reset_vel);
+                break;
+        }
 
         ros::spinOnce();
         loop_rate.sleep();
