@@ -13,6 +13,7 @@
 #define TURN_INIT 0.5
 #define MAX_SPEED 3.0
 #define MAX_TURN 3.0
+#define TIMEOUT_CONNECTION 2
 
 class RoboticartsPad{
 
@@ -44,6 +45,15 @@ class RoboticartsPad{
 
         float _speed = SPEED_INIT, _turn = TURN_INIT;
 
+        double last_connection = 0;
+
+        double init_connecting = 0;
+
+        bool firstConnection = true;
+
+        enum state_resources {BOOTING, CONNECTING, CONNECTED,CHECK_CONNECTION, DISCONNECTED, RECONNECTING};
+        int state = BOOTING;
+
         enum command {SPEED_UP, SPEED_DOWN, TURN_UP, TURN_DOWN};
 
         void updateJoyValues(const sensor_msgs::Joy::ConstPtr& msg);
@@ -56,6 +66,9 @@ class RoboticartsPad{
         int8_t setSpeedDirection(uint8_t forward_stick, uint8_t backward_stick);
         int8_t setTurnDirection(uint8_t clockwise_button, uint8_t counterclockwise_button );
         geometry_msgs::Twist setVelocity ();
+        void holdConnection();
+        void printConnection(bool state);
+        bool checkConnection();
         void joyCallback(const sensor_msgs::Joy::ConstPtr& msg);
 
 

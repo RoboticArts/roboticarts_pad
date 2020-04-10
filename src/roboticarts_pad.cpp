@@ -12,7 +12,12 @@ RoboticartsPad::RoboticartsPad(ros::NodeHandle nodehandle):_nh(nodehandle)
     joy_sub = _nh.subscribe("joy", 1, &RoboticartsPad::joyCallback, this);
     vel_pub = _nh.advertise<geometry_msgs::Twist>(cmd_vel_topic, 1000);
 
-}
+    init_connecting  = ros::Time::now().toSec();
+
+
+    ROS_INFO("%s node already!",nodeName.c_str());
+
+} 
 
 
 void RoboticartsPad::updateJoyValues(const sensor_msgs::Joy::ConstPtr& msg){
@@ -198,6 +203,7 @@ float RoboticartsPad::setSpeed(uint8_t increment_button, uint8_t decrement_butto
 
 
 
+
 int8_t RoboticartsPad::setSpeedDirection(uint8_t forward_stick, uint8_t backward_stick){
 
     int8_t speed_direction_value;
@@ -247,11 +253,13 @@ geometry_msgs::Twist RoboticartsPad::setVelocity (){
   geometry_msgs::Twist vel;
 
   float speed, turn;
+  float isConnected;
   int8_t speedDirection, turnDirection;
+  
+  isConnected = checkConnection(); //Check joystick connection
 
-  // Dead man button
-  if(R1_button){
-
+  // Dead man button 
+  if(R1_button && isConnected){
 
       speed = setSpeed(triangle_button, x_button); // Increment, decrement
       turn= setTurn(square_button, circle_button); // Increment, decrement
@@ -261,7 +269,6 @@ geometry_msgs::Twist RoboticartsPad::setVelocity (){
 
       vel.linear.x = speedDirection * speed;
       vel.angular.z = turnDirection * turn;
-
   }
  
   else {
@@ -276,10 +283,103 @@ geometry_msgs::Twist RoboticartsPad::setVelocity (){
   return vel;
 }
 
+void RoboticartsPad::holdConnection(){
+
+      if(firstConnection)
+        last_connection = ros::Time::now().toSec();
+
+      firstConnection = false;
+      last_connection = ros::Time::now().toSec();
+
+}
+
+
+void RoboticartsPad::printConnection(bool isConnected){
+
+    switch(state){
+
+        case BOOTING:
+
+            ROS_INFO("Node running!");
+            ROS_INFO("Waiting for joystick...");
+            state = CONNECTING;
+
+            break;
+
+        case CONNECTING:
+
+            if(ros::Time::now().toSec() - init_connecting < TIMEOUT_CONNECTION){
+
+                if(isConnected)
+                    state = CONNECTED;
+
+            }
+            else{
+
+                if(!isConnected)
+                    state = DISCONNECTED;
+            }
+
+            break;
+
+        case CONNECTED:
+
+            ROS_INFO("Joystick connected [Last sync: %f]", ros::Time::now().toSec() - last_connection );
+            state = CHECK_CONNECTION;
+
+            break;
+
+        case CHECK_CONNECTION:
+
+                if(!isConnected) 
+                    state = DISCONNECTED;
+
+            break;
+
+        case DISCONNECTED:
+
+                ROS_ERROR("Lost joystick connection [Last sync: %f]", ros::Time::now().toSec() - last_connection );
+                state = RECONNECTING;
+
+            break;
+
+        case RECONNECTING:
+
+                if(isConnected) 
+                    state = CONNECTED;
+            break;
+    }
+
+}
+
+ 
+bool RoboticartsPad::checkConnection(){
+
+    bool isConnected;  
+
+    if(!firstConnection){
+
+        if(ros::Time::now().toSec() - last_connection < TIMEOUT_CONNECTION) 
+            isConnected = true;
+        else
+            isConnected = false;
+    }
+    else
+    {
+        isConnected = false;
+    }
+    
+
+    printConnection(isConnected); //Print once every time isConnected changes
+    
+    return isConnected;
+
+}
 
 void RoboticartsPad::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
   updateJoyValues(msg);
+  holdConnection();
   //printJoyValues();
 }
 
