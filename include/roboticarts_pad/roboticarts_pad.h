@@ -60,7 +60,7 @@ class RoboticartsPad{
 
         void updateJoyValues(const sensor_msgs::Joy::ConstPtr& msg);
         void printJoyValues(void);
-        float setLimits(float value, float min, float max);
+        void setLimits(float &value, float min, float max);
         bool isPressed(bool button);
         bool isReleased(bool button);
         float setTurn(uint8_t increment_button, uint8_t decrement_button);
@@ -69,9 +69,9 @@ class RoboticartsPad{
         int8_t setTurnDirection(uint8_t clockwise_button, uint8_t counterclockwise_button );
         geometry_msgs::Twist setVelocity ();
         void holdConnection();
+        bool checkConnection();
         int  checkJoystickState();
         void printJoystickState(int state);
-        bool checkConnection();
         void joyCallback(const sensor_msgs::Joy::ConstPtr& msg);
 
 

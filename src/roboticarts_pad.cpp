@@ -87,7 +87,7 @@ void RoboticartsPad::printJoyValues(){
 }
 
 
-float RoboticartsPad::setLimits(float value, float min, float max){
+void RoboticartsPad::setLimits(float &value, float min, float max){
 
     if (value >= max)
         value = max;
@@ -95,7 +95,6 @@ float RoboticartsPad::setLimits(float value, float min, float max){
     if (value <= min)
         value = min;
 
-  return value;
 }
 
 bool RoboticartsPad::isPressed(bool button){
@@ -117,8 +116,6 @@ bool RoboticartsPad::isReleased(bool button){
 
 
 float RoboticartsPad::setTurn(uint8_t increment_button, uint8_t decrement_button){
-
-  float turn_value;
 
   // Execute once when button is pressed
   if(!isExecuted[TURN_UP]) {
@@ -152,16 +149,13 @@ float RoboticartsPad::setTurn(uint8_t increment_button, uint8_t decrement_button
       isExecuted[TURN_DOWN] = false;
   }
 
+  setLimits(_turn, 0, MAX_TURN);
 
-  turn_value = setLimits(_turn, 0, MAX_TURN);
-
-  return turn_value;
+  return _turn;
 }
 
 
 float RoboticartsPad::setSpeed(uint8_t increment_button, uint8_t decrement_button){
-
-  float speed_value;
 
   // Execute once when button is pressed
   if(!isExecuted[SPEED_UP]) {
@@ -196,9 +190,9 @@ float RoboticartsPad::setSpeed(uint8_t increment_button, uint8_t decrement_butto
   }
 
 
-  speed_value = setLimits(_speed, 0, MAX_SPEED);
+  setLimits(_speed, 0, MAX_SPEED);
 
-  return speed_value;
+  return _speed;
 }
 
 
