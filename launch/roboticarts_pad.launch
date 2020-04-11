@@ -3,16 +3,15 @@
 <launch>
 
     <arg name="cmd_vel" default="cmd_vel"/>
-<!--
-     <arg name="joy_dev" default="/dev/input/js0"/>
+    <arg name="joy_dev" default="/dev/input/js1"/>
 
-     joy node 
+    <!-- joy node  -->
     <node pkg="joy" type="joy_node" name="joy" output="screen" respawn="true">
         <param name="dev" type="string" value="$(arg joy_dev)" />
     </node>
--->
+
     <!-- roboticarts_pad file -->
-    <node pkg="roboticarts_pad" type="roboticarts_pad" name="roboticarts_pad_node" output="screen">
+    <node pkg="roboticarts_pad" type="roboticarts_pad_node" name="roboticarts_pad_node" output="screen">
         <param name="cmd_vel_topic" type="string" value="$(arg cmd_vel)" />
     </node>
 
