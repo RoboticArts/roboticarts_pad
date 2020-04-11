@@ -202,7 +202,7 @@ float RoboticartsPad::setSpeed(uint8_t increment_button, uint8_t decrement_butto
 }
 
 
-int8_t RoboticartsPad::setSpeedDirection(int8_t forward_stick, int8_t backward_stick){
+int8_t RoboticartsPad::setSpeedDirection(float forward_stick, float backward_stick){
 
     int8_t speed_direction_value;
 
@@ -237,46 +237,49 @@ int8_t RoboticartsPad::setTurnDirection(int8_t clockwise_button, int8_t counterc
     // Stop
     else
       turn_direction_value = 0;
-
+    
 
     return turn_direction_value;
 
 }
 
 
-geometry_msgs::Twist RoboticartsPad::setVelocity (){
+void RoboticartsPad::setVelocity (){
 
   geometry_msgs::Twist vel;
+
+  resetVelocityFlag = true;
 
   float speed, turn;
   float isConnected;
   int8_t speedDirection, turnDirection;
 
-  // Dead man button 
-  if(R1_button){
+  speed = setSpeed(triangle_button, x_button); // Increment, decrement
+  turn= setTurn(square_button, circle_button); // Increment, decrement
 
-      speed = setSpeed(triangle_button, x_button); // Increment, decrement
-      turn= setTurn(square_button, circle_button); // Increment, decrement
+  speedDirection = setSpeedDirection(vertical_axis_stick_left, vertical_axis_stick_left); // Forward, backward
+  turnDirection = setTurnDirection(L2_button, R2_button); // Clockwise, Counterclockwise 
 
-      speedDirection = setSpeedDirection(vertical_axis_stick_left, vertical_axis_stick_left); // Forward, backward
-      turnDirection = setTurnDirection(L2_button, R2_button); // Clockwise, Counterclockwise 
+  vel.linear.x = speedDirection * speed;
+  vel.angular.z = turnDirection * turn;
 
-      vel.linear.x = speedDirection * speed;
-      vel.angular.z = turnDirection * turn;
-  }
- 
-  else {
-
-    // Reset velocity
-    geometry_msgs::Twist reset_vel;
-    vel = reset_vel;
-
-  }
-
-
-  return vel;
+  vel_pub.publish(vel);
 }
 
+void RoboticartsPad::resetOnceVelocity(){
+
+    if(resetVelocityFlag){
+        
+        geometry_msgs::Twist vel;
+        vel_pub.publish(vel);
+        resetVelocityFlag = false;
+    }
+}
+
+bool RoboticartsPad::deadManButton(){
+
+    return R1_button;
+}
 
 void RoboticartsPad::holdConnection(){
 
@@ -390,7 +393,6 @@ void RoboticartsPad::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
 void RoboticartsPad::run(){
 
-    geometry_msgs::Twist vel;
     ros::Rate loop_rate(50);
 
     while (ros::ok()){
@@ -400,15 +402,18 @@ void RoboticartsPad::run(){
         switch(status){
         
             case CONNECTED:
-                // Read from joystick, write to cmd_vel
-                vel = setVelocity();
-                vel_pub.publish(vel);
+
+                if(deadManButton())
+                    setVelocity();
+                else
+                    resetOnceVelocity();
+            
                 break;
 
             case DISCONNECTED:
-                // Clear cmd_vel
-                geometry_msgs::Twist reset_vel;;
-                vel_pub.publish(reset_vel);
+
+                    resetOnceVelocity();
+
                 break;
         }
 

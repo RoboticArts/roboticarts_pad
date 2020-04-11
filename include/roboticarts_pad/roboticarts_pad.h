@@ -52,6 +52,8 @@ class RoboticartsPad{
 
         bool firstConnection = true;
 
+        bool resetVelocityFlag = false;
+
         enum state_resources {CONNECTING, CONNECTED, DISCONNECTED, NOT_FOUND};
         int state = CONNECTING;
 
@@ -67,9 +69,11 @@ class RoboticartsPad{
         bool isReleased(bool button);
         float setTurn(uint8_t increment_button, uint8_t decrement_button);
         float setSpeed(uint8_t increment_button, uint8_t decrement_button);
-        int8_t setSpeedDirection(int8_t forward_stick, int8_t backward_stick);
+        int8_t setSpeedDirection(float forward_stick, float backward_stick);
         int8_t setTurnDirection(int8_t clockwise_button, int8_t counterclockwise_button );
-        geometry_msgs::Twist setVelocity ();
+        void resetOnceVelocity();
+        void setVelocity ();
+        bool deadManButton();
         void holdConnection();
         bool checkConnection();
         int  checkJoystickState();
