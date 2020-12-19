@@ -1,0 +1,34 @@
+
+pad_twist:
+
+  linear_init:  0.1
+  linear_increment:  0.01
+  linear_max:  0.25
+
+  angular_init: 0.5
+  angular_increment: 0.05  
+  angular_max: 1.0
+
+pad_map:
+
+  square_button:   [0,  'digital']
+  x_button:        [1,  'digital']
+  circle_button:   [2,  'digital']
+  triangle_button: [3,  'digital']
+  L1_button:       [4,  'digital'] 
+  R1_button:       [5,  'digital'] 
+  share_button:    [8,  'digital']
+  options_button:  [9,  'digital']
+  L3_button:       [10, 'digital']
+  R3_button:       [11, 'digital']
+  ps4_button:      [12, 'digital']
+  touchpad_button: [13, 'digital']
+
+  horizontal_axis_stick_left:  [0,  'analog']
+  vertical_axis_stick_left:    [1,  'analog']
+  horizontal_axis_stick_right: [2,  'analog']
+  L2_trigger:                  [3,  'analog']
+  R2_trigger:                  [4,  'analog']
+  vertical_axis_stick_right:   [5,  'analog']
+  horizontal_cross_pad:        [9,  'analog']
+  vertical_cross_pad:          [10, 'analog']
