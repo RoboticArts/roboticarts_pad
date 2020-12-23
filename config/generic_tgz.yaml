@@ -1,0 +1,30 @@
+
+pad_twist:
+
+  linear_init:  0.1
+  linear_increment:  0.01
+  linear_max:  0.25
+
+  angular_init: 0.5
+  angular_increment: 0.05  
+  angular_max: 1.0
+
+pad_map:
+
+  square_button:   [3,  'digital'] # X button
+  x_button:        [0,  'digital'] # A button
+  circle_button:   [1,  'digital'] # B button
+  triangle_button: [4,  'digital'] # Y button
+  L1_button:       [6,  'digital'] 
+  R1_button:       [7,  'digital'] 
+  L3_button:       [13, 'digital']
+  R3_button:       [14, 'digital']
+
+  L2_trigger:                  [5,  'analog']
+  R2_trigger:                  [4,  'analog']
+  horizontal_axis_stick_left:  [0,  'analog']
+  vertical_axis_stick_left:    [1,  'analog']
+  horizontal_axis_stick_right: [2,  'analog']
+  vertical_axis_stick_right:   [3,  'analog']
+  horizontal_cross_pad:        [6,  'analog']
+  vertical_cross_pad:          [7,  'analog']
