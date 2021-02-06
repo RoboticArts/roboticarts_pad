@@ -241,13 +241,13 @@ float RoboticartsPad::fmap(float value, float in_min, float in_max,
                             float out_min, float out_max, uint8_t precission){
     
     // Map a decimal
-    long exp = pow(10, precission);
-    long ivalue = value * exp;
-    long iin_min = in_min * exp;
-    long iin_max = in_max * exp;
-    long iout_min = out_min * exp;
-    long iout_max = out_max * exp;
-    long iresult;
+    int64_t exp = pow(10, precission);
+    int64_t ivalue = value * exp;
+    int64_t iin_min = in_min * exp;
+    int64_t iin_max = in_max * exp;
+    int64_t iout_min = out_min * exp;
+    int64_t iout_max = out_max * exp;
+    int64_t iresult;
     float result;
 
     iresult = (((ivalue+abs(iin_min))*(iout_max-iout_min))/(iin_max-iin_min))+iout_min;
@@ -260,11 +260,11 @@ float RoboticartsPad::fmap(float value, float in_min, float in_max,
 
 float RoboticartsPad::fmultiple(float value, float multiple, bool up, uint8_t precission){
    
-    long exp = pow(10, precission);
-    long ivalue = abs(value * exp);
-    long imultiple = abs(multiple * exp);
-    long iremainder;
-    long iresult;
+    int64_t exp = pow(10, precission);
+    int64_t ivalue = abs(value * exp);
+    int64_t imultiple = abs(multiple * exp);
+    int64_t iremainder;
+    int64_t iresult;
     float result;
 
     iremainder = ivalue % imultiple;
@@ -495,7 +495,7 @@ geometry_msgs::Twist RoboticartsPad::getTwistFromPad(){
 
 void RoboticartsPad::pubTwist(geometry_msgs::Twist twist, uint8_t precission){
 
-    long exp = pow(10, precission);
+    int64_t exp = pow(10, precission);
 
     twist.linear.x = std::round(twist.linear.x*exp)/float(exp);
     twist.linear.y = std::round(twist.linear.y*exp)/float(exp);
