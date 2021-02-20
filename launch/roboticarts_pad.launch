@@ -6,8 +6,7 @@
     <arg name="joy_dev" default="/dev/input/js_robot"/>
     <arg name="driver" default="ds4drv" />
     <arg name="pad" default="ps4" />
-
-    <arg name="pad_config" default="$(find roboticarts_pad)/config/$(arg driver)_$(arg pad).yaml" />
+    <arg name="pad_twist" default="$(find roboticarts_pad)/config/pad_twist.yaml" />
 
     <!-- joy node  -->
     <node pkg="joy" type="joy_node" name="joy" output="screen" respawn="true">
@@ -16,7 +15,8 @@
 
     <!-- roboticarts_pad file -->
     <node pkg="roboticarts_pad" type="roboticarts_pad_node" name="roboticarts_pad" output="screen">
-        <rosparam command="load" file="$(arg pad_config)"       /> 
+        <rosparam command="load" file="$(find roboticarts_pad)/config/$(arg driver)_$(arg pad).yaml" /> 
+        <rosparam command="load" file="$(arg pad_twist)" /> 
         <param name="cmd_vel_topic" value="$(arg cmd_vel)"      />
         <param name="pad_settings/driver" value="$(arg driver)" /> 
     </node>
