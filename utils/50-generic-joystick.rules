@@ -1,0 +1,6 @@
+# Generic TGZ controller
+KERNEL=="js[0-9]*", SUBSYSTEM=="input", SYMLINK+="input/js_robot", ATTRS{name}=="Controller"
+
+# Generic PS4 controller
+KERNEL=="js[0-9]*", SUBSYSTEM=="input", SYMLINK+="input/js_robot", ATTRS{name}=="Wireless Controller"
+
