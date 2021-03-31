@@ -1,0 +1,20 @@
+
+pad_map:
+
+  square_button:   [3,  'digital'] # X button
+  x_button:        [2,  'digital'] # A button
+  circle_button:   [1,  'digital'] # B button
+  triangle_button: [0,  'digital'] # Y button
+  L1_button:       [4,  'digital'] 
+  R1_button:       [5,  'digital'] 
+  L2_trigger:      [6,  'digital']
+  R2_trigger:      [7,  'digital']
+  L3_button:       [10, 'digital']
+  R3_button:       [11, 'digital']
+
+  horizontal_axis_stick_left:  [0,  'analog']
+  vertical_axis_stick_left:    [1,  'analog']
+  horizontal_axis_stick_right: [2,  'analog']
+  vertical_axis_stick_right:   [3,  'analog']
+  horizontal_cross_pad:        [4,  'analog']
+  vertical_cross_pad:          [5,  'analog']
